@@ -1,0 +1,332 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────────
+
+enum Role {
+  SUPERADMIN
+  USER
+}
+
+enum Profile {
+  MARKETER
+  DEVELOPER
+}
+
+enum SystemType {
+  SAAS
+  CUSTOM
+}
+
+enum BudgetStatus {
+  DRAFT
+  SENT
+  ACCEPTED
+  REJECTED
+}
+
+enum PaymentPlanType {
+  PERCENTAGE
+  FIXED
+}
+
+enum ObligationStatus {
+  PENDING
+  PAID
+}
+
+enum MovementType {
+  INCOME
+  EXPENSE
+}
+
+enum PaymentMethod {
+  CASH
+  TRANSFER
+  CARD
+  OTHER
+}
+
+enum KanbanArea {
+  MARKETING
+  SOFTWARE
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum SystemStatus {
+  ACTIVE
+  MAINTENANCE
+  DEPRECATED
+}
+
+enum Currency {
+  ARS
+  USD
+}
+
+enum ClientStatus {
+  ACTIVE
+  INACTIVE
+  AT_RISK
+}
+
+// ─────────────────────────────────────────────
+// USERS
+// ─────────────────────────────────────────────
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  password  String
+  role      Role     @default(USER)
+  profile   Profile  @default(MARKETER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tasksAssigned Task[]        @relation("TaskAssignee")
+  tasksCreated  Task[]        @relation("TaskCreator")
+  activityLogs  ActivityLog[]
+}
+
+// ─────────────────────────────────────────────
+// TAGS (controlled, not free-form)
+// ─────────────────────────────────────────────
+
+model Tag {
+  id      String      @id @default(cuid())
+  name    String      @unique
+  color   String?
+  clients ClientTag[]
+}
+
+// ─────────────────────────────────────────────
+// CLIENTS
+// ─────────────────────────────────────────────
+
+model Client {
+  id        String       @id @default(cuid())
+  name      String
+  email     String?
+  phone     String?
+  company   String?
+  notes     String?
+  status    ClientStatus @default(ACTIVE)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  deletedAt DateTime?
+
+  tags        ClientTag[]
+  systems     System[]
+  budgets     Budget[]
+  obligations Obligation[]
+  movements   FinancialMovement[]
+  tasks       Task[]
+}
+
+model ClientTag {
+  clientId String
+  tagId    String
+  client   Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  tag      Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([clientId, tagId])
+}
+
+// ─────────────────────────────────────────────
+// SYSTEMS
+// SAAS: no client required
+// CUSTOM: always linked to a client
+// ─────────────────────────────────────────────
+
+model System {
+  id          String        @id @default(cuid())
+  name        String
+  description String?
+  type        SystemType
+  status      SystemStatus?
+  repoUrl     String?
+  clientId    String?
+  client      Client?       @relation(fields: [clientId], references: [id])
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  deletedAt   DateTime?
+
+  tasks Task[]
+
+  @@index([clientId])
+  @@index([type])
+}
+
+// ─────────────────────────────────────────────
+// BUDGETS & PAYMENT PLAN
+// ─────────────────────────────────────────────
+
+model Budget {
+  id          String       @id @default(cuid())
+  title       String
+  description String?
+  currency    Currency     @default(ARS)
+  totalAmount Decimal      @db.Decimal(12, 2)
+  status      BudgetStatus @default(DRAFT)
+  clientId    String
+  client      Client       @relation(fields: [clientId], references: [id])
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  deletedAt   DateTime?
+
+  paymentPlanItems PaymentPlanItem[]
+  obligations      Obligation[]
+
+  @@index([clientId])
+  @@index([status])
+}
+
+// Each item in the payment plan becomes an Obligation when the budget is accepted.
+// Convention: PERCENTAGE → amount is 0–100 (e.g. 50 = 50%). FIXED → amount is the real value.
+model PaymentPlanItem {
+  id       String          @id @default(cuid())
+  order    Int
+  budgetId String
+  budget   Budget          @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+  amount   Decimal         @db.Decimal(12, 2)
+  type     PaymentPlanType
+  dueDate  DateTime
+
+  obligation Obligation?
+  @@index([budgetId])
+  @@index([order])
+}
+
+// ─────────────────────────────────────────────
+// FINANCIAL OBLIGATIONS (Deuda)
+// Auto-generated when a budget is accepted
+// ─────────────────────────────────────────────
+
+model Obligation {
+  id                String           @id @default(cuid())
+  currency          Currency         @default(ARS)
+  amount            Decimal          @db.Decimal(12, 2)
+  dueDate           DateTime
+  status            ObligationStatus @default(PENDING)
+  clientId          String
+  client            Client           @relation(fields: [clientId], references: [id])
+  budgetId          String?
+  budget            Budget?          @relation(fields: [budgetId], references: [id])
+  paymentPlanItemId String?          @unique
+  paymentPlanItem   PaymentPlanItem? @relation(fields: [paymentPlanItemId], references: [id])
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  movements FinancialMovement[]
+
+  @@index([clientId])
+  @@index([status])
+  @@index([dueDate])
+}
+
+// ─────────────────────────────────────────────
+// FINANCIAL MOVEMENTS (Movimientos reales de dinero)
+// ─────────────────────────────────────────────
+
+model FinancialMovement {
+  id            String        @id @default(cuid())
+  currency      Currency      @default(ARS)
+  type          MovementType
+  amount        Decimal       @db.Decimal(12, 2)
+  description   String?
+  paymentMethod PaymentMethod
+  date          DateTime
+  clientId      String?
+  client        Client?       @relation(fields: [clientId], references: [id])
+  obligationId  String?
+  obligation    Obligation?   @relation(fields: [obligationId], references: [id])
+  createdAt     DateTime      @default(now())
+
+  @@index([clientId])
+  @@index([date])
+}
+
+// ─────────────────────────────────────────────
+// KANBAN
+// Each area (MARKETING, SOFTWARE) has its own columns
+// ─────────────────────────────────────────────
+
+model KanbanColumn {
+  id    String     @id @default(cuid())
+  name  String
+  area  KanbanArea
+  order Int
+  color String?
+
+  tasks Task[]
+
+  @@unique([area, order])
+  @@unique([area, name])
+}
+
+// ─────────────────────────────────────────────
+// TASKS
+// Constraint: clientId OR systemId must be set (enforced in backend, not DB).
+// ─────────────────────────────────────────────
+
+model Task {
+  id             String       @id @default(cuid())
+  title          String
+  description    String?
+  priority       TaskPriority @default(MEDIUM)
+  dueDate        DateTime?
+  kanbanColumnId String
+  kanbanColumn   KanbanColumn @relation(fields: [kanbanColumnId], references: [id])
+  clientId       String?
+  client         Client?      @relation(fields: [clientId], references: [id])
+  systemId       String?
+  system         System?      @relation(fields: [systemId], references: [id])
+  assignedToId   String?
+  assignedTo     User?        @relation("TaskAssignee", fields: [assignedToId], references: [id])
+  createdById    String
+  createdBy      User         @relation("TaskCreator", fields: [createdById], references: [id])
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  deletedAt      DateTime?
+
+  @@index([kanbanColumnId])
+  @@index([assignedToId])
+  @@index([clientId])
+  @@index([systemId])
+}
+
+// ─────────────────────────────────────────────
+// ACTIVITY LOGS (Audit Trail)
+// Records who did what, on which entity, and when.
+// ─────────────────────────────────────────────
+
+model ActivityLog {
+  id        String   @id @default(cuid())
+  userId    String
+  action    String
+  entity    String
+  entityId  String
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([entity, entityId])
+  @@index([userId])
+  @@index([createdAt])
+}
