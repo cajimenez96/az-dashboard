@@ -38,7 +38,4 @@ RUN npx prisma generate
 
 EXPOSE 3000
 
-# (opcional pero recomendado)
-HEALTHCHECK CMD curl -f https://api-crm.azmarketing.com.ar/api/v1/health || exit 1
-
 CMD ["sh", "-c", "npx prisma migrate deploy && npm run start:prod"]
