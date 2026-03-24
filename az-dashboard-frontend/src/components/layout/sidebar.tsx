@@ -1,34 +1,52 @@
 "use client";
 
+import type { LucideIcon } from "lucide-react";
 import {
   CreditCard,
   LayoutDashboard,
   ListTodo,
   LogOut,
   Server,
+  UserCog,
   Users,
   Wallet,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useMemo } from "react";
 
 import { t } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/stores/auth.store";
 
-const NAV_ITEMS = [
-  { href: "/dashboard", labelKey: "panel" as const, icon: LayoutDashboard },
-  { href: "/clients", labelKey: "clients" as const, icon: Users },
-  { href: "/systems", labelKey: "systems" as const, icon: Server },
-  { href: "/budgets", labelKey: "budgets" as const, icon: CreditCard },
-  { href: "/tasks", labelKey: "tasks" as const, icon: ListTodo },
-  { href: "/finance", labelKey: "finance" as const, icon: Wallet },
-] as const;
+type NavLabelKey = keyof typeof t.nav;
 
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAuthStore();
+
+  const navItems = useMemo(() => {
+    const role = user?.role;
+    const items: {
+      href: string;
+      labelKey: NavLabelKey;
+      icon: LucideIcon;
+    }[] = [
+      { href: "/dashboard", labelKey: "panel", icon: LayoutDashboard },
+      { href: "/clients", labelKey: "clients", icon: Users },
+      { href: "/systems", labelKey: "systems", icon: Server },
+    ];
+    if (role === "SUPERADMIN") {
+      items.push({ href: "/users", labelKey: "users", icon: UserCog });
+    }
+    items.push(
+      { href: "/budgets", labelKey: "budgets", icon: CreditCard },
+      { href: "/tasks", labelKey: "tasks", icon: ListTodo },
+      { href: "/finance", labelKey: "finance", icon: Wallet },
+    );
+    return items;
+  }, [user?.role]);
 
   function handleLogout() {
     logout();
@@ -50,7 +68,7 @@ export function Sidebar() {
       </div>
 
       <nav className="flex flex-1 flex-col gap-0.5 p-3">
-        {NAV_ITEMS.map(({ href, labelKey, icon: Icon }) => {
+        {navItems.map(({ href, labelKey, icon: Icon }) => {
           const active =
             href === "/dashboard"
               ? pathname === "/dashboard"

@@ -12,6 +12,7 @@ function titleForPath(pathname: string): string {
   }
   if (pathname.startsWith("/clients")) return t.nav.clients;
   if (pathname.startsWith("/systems")) return t.nav.systems;
+  if (pathname.startsWith("/users")) return t.nav.users;
   if (pathname.startsWith("/budgets")) return t.nav.budgets;
   if (pathname.startsWith("/tasks")) return t.nav.tasks;
   if (pathname.startsWith("/finance")) return t.nav.finance;
