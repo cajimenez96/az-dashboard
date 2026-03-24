@@ -22,7 +22,7 @@ FROM node:22-alpine AS runner
 
 WORKDIR /app
 
-# 🔥 FIX: necesario para healthcheck y compatibilidad Prisma
+# ✅ necesario para prisma + healthchecks
 RUN apk add --no-cache curl openssl
 
 ENV NODE_ENV=production
@@ -33,14 +33,12 @@ COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/scripts ./scripts
 COPY package*.json ./
 
-# Prisma generate again (safety)
+# regenerar prisma en runtime (correcto)
 RUN npx prisma generate
 
 EXPOSE 3000
 
-RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+# (opcional pero recomendado)
+HEALTHCHECK CMD curl -f http://localhost:3000/health || exit 1
 
 CMD ["sh", "-c", "npx prisma migrate deploy && npm run start:prod"]
-
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD curl -f http://localhost:3000/health || exit 1
