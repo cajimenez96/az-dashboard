@@ -14,6 +14,7 @@ import { Role } from '@prisma/client';
 import { Roles } from '../common/decorators/roles.decorator';
 import { CreateKanbanColumnDto } from './dto/create-kanban-column.dto';
 import { QueryKanbanColumnDto } from './dto/query-kanban-column.dto';
+import { ReorderKanbanColumnDto } from './dto/reorder-kanban-column.dto';
 import { UpdateKanbanColumnDto } from './dto/update-kanban-column.dto';
 import { KanbanService } from './kanban.service';
 
@@ -23,7 +24,7 @@ export class KanbanController {
 
   // ─────────────────────────────────────────────
   // POST /kanban-columns   → 201
-  // SUPERADMIN only
+  // SUPERADMIN only. order auto-assigned as last + 1 in area.
   // ─────────────────────────────────────────────
   @Post()
   @HttpCode(HttpStatus.CREATED)
@@ -42,8 +43,19 @@ export class KanbanController {
   }
 
   // ─────────────────────────────────────────────
+  // PATCH /kanban-columns/reorder   → 200
+  // SUPERADMIN only. Must be declared before /:id to avoid route conflict.
+  // ─────────────────────────────────────────────
+  @Patch('reorder')
+  @HttpCode(HttpStatus.OK)
+  @Roles(Role.SUPERADMIN)
+  reorderColumns(@Body() dto: ReorderKanbanColumnDto): Promise<void> {
+    return this.kanbanService.reorderColumns(dto);
+  }
+
+  // ─────────────────────────────────────────────
   // GET /kanban-columns/:id   → 200
-  // Includes active tasks in the column
+  // Includes active tasks in the column.
   // ─────────────────────────────────────────────
   @Get(':id')
   findOneColumn(@Param('id') id: string) {
@@ -52,7 +64,7 @@ export class KanbanController {
 
   // ─────────────────────────────────────────────
   // PATCH /kanban-columns/:id   → 200
-  // SUPERADMIN only
+  // SUPERADMIN only. Editable: name, color.
   // ─────────────────────────────────────────────
   @Patch(':id')
   @Roles(Role.SUPERADMIN)

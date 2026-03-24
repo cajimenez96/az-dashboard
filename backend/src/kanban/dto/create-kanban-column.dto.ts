@@ -1,5 +1,5 @@
 import { KanbanArea } from '@prisma/client';
-import { IsEnum, IsInt, IsOptional, IsString, Min, MinLength } from 'class-validator';
+import { IsEnum, IsOptional, IsString, MinLength } from 'class-validator';
 
 export class CreateKanbanColumnDto {
   @IsString()
@@ -8,10 +8,6 @@ export class CreateKanbanColumnDto {
 
   @IsEnum(KanbanArea, { message: 'area must be MARKETING or SOFTWARE' })
   area: KanbanArea;
-
-  @IsInt({ message: 'order must be an integer' })
-  @Min(0, { message: 'order must be 0 or greater' })
-  order: number;
 
   @IsString()
   @IsOptional()

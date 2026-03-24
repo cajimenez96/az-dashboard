@@ -43,12 +43,17 @@ export function KanbanBoard({ area }: { area: KanbanArea }) {
   const [activeTask, setActiveTask] = useState<TaskListItem | null>(null);
   const [modal, setModal] = useState<ModalState>(null);
 
+  const tasksForArea = useMemo(
+    () => (tasks ?? []).filter((t) => t.kanbanColumn.area === area),
+    [tasks, area],
+  );
+
   const flatForBoard = useMemo(() => {
-    const t = tasks ?? [];
+    const t = tasksForArea;
     const c = columns ?? [];
     if (c.length === 0) return t;
     return normalizeTasksForBoard(t, c);
-  }, [tasks, columns]);
+  }, [tasksForArea, columns]);
 
   const grouped = useMemo(() => {
     const c = columns ?? [];

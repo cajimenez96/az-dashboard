@@ -33,6 +33,7 @@ export const t = {
     finance: "Finanzas",
     systems: "Sistemas",
     users: "Usuarios",
+    kanbanConfig: "Kanban",
     appName: "AZ CRM",
   },
   auth: {
@@ -113,6 +114,10 @@ export const t = {
     systemUpdated: "Sistema actualizado",
     userCreated: "Usuario creado correctamente",
     userUpdated: "Usuario actualizado",
+    kanbanColumnCreated: "Columna creada",
+    kanbanColumnUpdated: "Columna actualizada",
+    kanbanColumnDeleted: "Columna eliminada",
+    kanbanColumnsReordered: "Orden actualizado",
     error: "Ocurrió un error",
   },
   dashboard: {
@@ -344,6 +349,47 @@ export const t = {
     errors: {
       clientNotFound: "Cliente no encontrado.",
       systemNotFound: "Sistema no encontrado.",
+    },
+  },
+  kanbanConfig: {
+    title: "Configuración de Kanban",
+    subtitle: "Gestiona columnas por área",
+    newColumn: "Nueva columna",
+    tabMarketing: "Marketing",
+    tabSoftware: "Software",
+    tabsAria: "Área del tablero",
+    listAria(area: "MARKETING" | "SOFTWARE"): string {
+      return area === "MARKETING"
+        ? "Columnas del tablero de marketing"
+        : "Columnas del tablero de software";
+    },
+    dragHandleAria: "Arrastrar para reordenar",
+    editAria: (name: string) => `Editar columna ${name}`,
+    deleteAria: (name: string) => `Eliminar columna ${name}`,
+    loadError: "No se pudieron cargar las columnas. Intente nuevamente.",
+    empty: "No hay columnas en esta área. Cree la primera para comenzar.",
+    forbiddenTitle: "Acceso restringido",
+    forbiddenDescription:
+      "Solo los superadministradores pueden configurar las columnas del Kanban.",
+    createTitle: "Nueva columna",
+    createDescription: (areaLabel: string) =>
+      `Se agregará al final del tablero de ${areaLabel}.`,
+    createSubmit: "Crear columna",
+    editTitle: "Editar columna",
+    editDescription: "Cambie el nombre o el color identificador.",
+    saveSubmit: "Guardar cambios",
+    fieldName: "Nombre",
+    fieldColor: "Color",
+    fieldColorOptional: "Color (opcional)",
+    namePlaceholder: "Ej. En progreso",
+    colorClearHint: "Deje el campo vacío para quitar el color.",
+    deleteTitle: "¿Eliminar columna?",
+    deleteDescription: (name: string) =>
+      `¿Confirma eliminar «${name}»? Las tareas no pueden quedar en una columna eliminada.`,
+    errors: {
+      hasTasks: "No puedes eliminar una columna con tareas",
+      nameExists: "Ya existe una columna con ese nombre en esta área.",
+      reorderNotFound: "No se pudo reordenar: revise que las columnas existan.",
     },
   },
   users: {

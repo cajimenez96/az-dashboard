@@ -166,8 +166,8 @@ export function ClientsTable({
     <Table>
       <TableHeader>
         <TableRow className="hover:bg-transparent">
-          <TableHead>{t.clients.table.name}</TableHead>
           <TableHead>{t.clients.table.company}</TableHead>
+          <TableHead>{t.clients.table.name}</TableHead>
           <TableHead>{t.clients.table.email}</TableHead>
           <TableHead className="w-[120px]">{t.clients.table.status}</TableHead>
           {actionsVisible ? (
@@ -180,10 +180,10 @@ export function ClientsTable({
       <TableBody>
         {rows.map((client) => (
           <TableRow key={client.id}>
-            <TableCell className="font-medium">{client.name}</TableCell>
-            <TableCell className="text-muted-foreground">
+            <TableCell className="font-medium">
               {formatCell(client.company)}
             </TableCell>
+            <TableCell className="text-muted-foreground">{client.name}</TableCell>
             <TableCell className="text-muted-foreground">
               {formatCell(client.email)}
             </TableCell>

@@ -2,6 +2,7 @@
 
 import type { LucideIcon } from "lucide-react";
 import {
+  Columns3,
   CreditCard,
   LayoutDashboard,
   ListTodo,
@@ -37,14 +38,17 @@ export function Sidebar() {
       { href: "/clients", labelKey: "clients", icon: Users },
       { href: "/systems", labelKey: "systems", icon: Server },
     ];
-    if (role === "SUPERADMIN") {
-      items.push({ href: "/users", labelKey: "users", icon: UserCog });
-    }
     items.push(
-      { href: "/budgets", labelKey: "budgets", icon: CreditCard },
       { href: "/tasks", labelKey: "tasks", icon: ListTodo },
+      { href: "/budgets", labelKey: "budgets", icon: CreditCard },
       { href: "/finance", labelKey: "finance", icon: Wallet },
     );
+    if (role === "SUPERADMIN") {
+      items.push(
+        { href: "/kanban-config", labelKey: "kanbanConfig", icon: Columns3 },
+        { href: "/users", labelKey: "users", icon: UserCog },
+      );
+    }
     return items;
   }, [user?.role]);
 
