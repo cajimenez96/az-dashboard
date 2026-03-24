@@ -18,9 +18,12 @@ RUN npm run build
 # ─────────────────────────────────────────────
 # Stage 2: Runner
 # ─────────────────────────────────────────────
-FROM node:22-slim AS runner
+FROM node:22-alpine AS runner
 
 WORKDIR /app
+
+# 🔥 FIX: necesario para healthcheck y compatibilidad Prisma
+RUN apk add --no-cache curl openssl
 
 ENV NODE_ENV=production
 
@@ -37,6 +40,7 @@ EXPOSE 3000
 
 RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
-HEALTHCHECK CMD wget --no-verbose --tries=1 --spider http://localhost:3000/api/v1 || exit 1
-
 CMD ["sh", "-c", "npx prisma migrate deploy && npm run start:prod"]
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD curl -f http://localhost:3000/health || exit 1
