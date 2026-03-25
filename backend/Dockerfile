@@ -33,7 +33,6 @@ ENV NODE_ENV=production
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/scripts ./scripts
 COPY package*.json ./
 
 # regenerar prisma en runtime (correcto)
