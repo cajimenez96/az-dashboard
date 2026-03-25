@@ -25,6 +25,9 @@ WORKDIR /app
 # ✅ necesario para prisma + healthchecks
 RUN apk add --no-cache curl openssl
 
+# ✅ necesario para ts-node
+RUN npm install -g ts-node typescript
+
 ENV NODE_ENV=production
 
 COPY --from=builder /app/node_modules ./node_modules
@@ -38,4 +41,4 @@ RUN npx prisma generate
 
 EXPOSE 3000
 
-CMD ["sh", "-c", "npx prisma migrate deploy && npm run start:prod"]
+CMD ["sh", "-c", "npx prisma migrate deploy && npx prisma db seed && npm run start:prod"]
